@@ -17,9 +17,12 @@ class SISA:
     def fit(self, x: np.ndarray, y: np.ndarray) -> None:
         """x: The independent set of features; expects a 2d numpy array
         \ny: The dependent features; expects a 1d numpy array"""
-        # for now just train them on the full dataset to test the voting system of self.predict()
-        for model in self.models:
-            model.fit(x, y)
+
+        input_shards = np.array_split(x, self.shards)
+        output_shards = np.array_split(y, self.shards)
+
+        for i, model in enumerate(self.models):
+            model.fit(input_shards[i], output_shards[i])
 
     def predict(self, x: np.ndarray) -> np.ndarray:
         """x: The dependent feature set on which to make a prediction; expects a 2d numpy array
