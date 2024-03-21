@@ -22,7 +22,18 @@ class SISA:
         output_shards = np.array_split(y, self.shards)
 
         for i, model in enumerate(self.models):
-            model.fit(input_shards[i], output_shards[i])
+            # split the shards into slices for incremental learning using partial_fit
+            input_slices = np.array_split(input_shards[i], self.slices)
+            output_slices = np.array_split(output_shards[i], self.slices)
+
+            # perform the first partial fit, by passing the unique labels that are expected on this shard
+            model.partial_fit(
+                input_slices[0], output_slices[0], np.unique(output_shards[i])
+            )
+
+            # perform the remaining partial fits on the rest of the slices of the current shard
+            for j in range(1, self.slices):
+                model.partial_fit(input_slices[j], output_slices[j])
 
     def predict(self, x: np.ndarray) -> np.ndarray:
         """x: The dependent feature set on which to make a prediction; expects a 2d numpy array
